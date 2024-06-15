@@ -7,10 +7,9 @@ class FutureSoket {
   StreamSubscription<int>? _subscription;
   final _readQueue = <int>[];
   int _readId = 0;
+  Duration? _timeout;
 
-
-
-  Future<void> connect(InternetAddress host, int port, Duration timeout) async {
+  Future<void> connect(dynamic host, int port, [Duration? timeout]) async {
     _socket = await Socket.connect(host, port, timeout: timeout);
     _subscription = _socket
         ?.asyncExpand((bytes) => Stream.fromIterable(bytes))
@@ -38,6 +37,11 @@ class FutureSoket {
     final result = Completer<Uint8List>();
     final bytes = Uint8List(len);
     int i = 0;
+    final timeout = Timer(_getTimeout(), () {
+      _subscription?.pause();
+      result.completeError(
+          TimeoutException("read soket timeout: ${_getTimeout()}"));
+    });
     _subscription?.onData((b) {
       bytes[i] = b;
       i += 1;
@@ -47,9 +51,11 @@ class FutureSoket {
         _subscription?.pause();
       }
     });
+
     _subscription?.resume();
-    
+
     final out = await result.future;
+    timeout.cancel();
     _readQueue.remove(id);
     return out;
   }
@@ -88,5 +94,9 @@ class FutureSoket {
       return 1;
     }
     return _readId;
+  }
+
+  Duration _getTimeout() {
+    return _timeout ?? const Duration(seconds: 10);
   }
 }

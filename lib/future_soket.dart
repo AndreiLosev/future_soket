@@ -38,11 +38,14 @@ class FutureSoket {
     final result = Completer<Uint8List>();
     final bytes = Uint8List(len);
     int i = 0;
-    _execptionTimer = Timer(_getTimeout(), () {
-      _subscription?.pause();
-      result.completeError(
-          TimeoutException("read soket timeout: ${_getTimeout()}"));
-    });
+
+    if (_timeout != null) {
+      _execptionTimer = Timer(_timeout!, () {
+        _subscription?.pause();
+        result.completeError(
+            TimeoutException("read soket timeout: $_timeout"));
+      });
+    }
     _subscription?.onData((b) {
       bytes[i] = b;
       i += 1;
@@ -74,7 +77,7 @@ class FutureSoket {
     _subscription?.cancel();
     _subscription = null;
     await _socket?.flush();
-    _socket?.close();
+    await _socket?.close();
     _socket?.destroy();
     _socket = null;
   }
@@ -96,9 +99,5 @@ class FutureSoket {
       return 1;
     }
     return _readId;
-  }
-
-  Duration _getTimeout() {
-    return _timeout ?? const Duration(seconds: 10);
   }
 }

@@ -8,6 +8,7 @@ class FutureSoket {
   final _readQueue = <int>[];
   int _readId = 0;
   Duration? _timeout;
+  Timer? _execptionTimer;
 
   Future<void> connect(dynamic host, int port, [Duration? timeout]) async {
     _socket = await Socket.connect(host, port, timeout: timeout);
@@ -37,7 +38,7 @@ class FutureSoket {
     final result = Completer<Uint8List>();
     final bytes = Uint8List(len);
     int i = 0;
-    final timeout = Timer(_getTimeout(), () {
+    _execptionTimer = Timer(_getTimeout(), () {
       _subscription?.pause();
       result.completeError(
           TimeoutException("read soket timeout: ${_getTimeout()}"));
@@ -55,7 +56,7 @@ class FutureSoket {
     _subscription?.resume();
 
     final out = await result.future;
-    timeout.cancel();
+    _execptionTimer?.cancel();
     _readQueue.remove(id);
     return out;
   }
@@ -69,6 +70,7 @@ class FutureSoket {
   }
 
   Future<void> disconnect() async {
+    _execptionTimer?.cancel();
     _subscription?.cancel();
     _subscription = null;
     await _socket?.flush();

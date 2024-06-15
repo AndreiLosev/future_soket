@@ -7,7 +7,6 @@ class FutureSoket {
   StreamSubscription<int>? _subscription;
   final _readQueue = <int>[];
   int _readId = 0;
-  Duration? _timeout;
   Timer? _execptionTimer;
 
   Future<void> connect(dynamic host, int port, [Duration? timeout]) async {
@@ -33,17 +32,17 @@ class FutureSoket {
 
   bool isConnected() => _socket is Socket;
 
-  Future<Uint8List> read(int len) async {
+  Future<Uint8List> read(int len, [Duration? timeout]) async {
     final id = await _waitYourTurn();
     final result = Completer<Uint8List>();
     final bytes = Uint8List(len);
     int i = 0;
 
-    if (_timeout != null) {
-      _execptionTimer = Timer(_timeout!, () {
+    if (timeout is Duration) {
+      _execptionTimer = Timer(timeout, () {
         _subscription?.pause();
         result.completeError(
-            TimeoutException("read soket timeout: $_timeout"));
+            TimeoutException("read soket timeout: $timeout", timeout));
       });
     }
     _subscription?.onData((b) {

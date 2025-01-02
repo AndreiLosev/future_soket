@@ -85,7 +85,6 @@ class FutureSoket {
     final id = _nexIndex();
     _readQueue.add(id);
     while (id != _readQueue.first) {
-      print([id, _readQueue]);
       await Future.delayed(const Duration(milliseconds: 10));
     }
 

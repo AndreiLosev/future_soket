@@ -13,9 +13,11 @@ class FutureSoket {
     _socket = await Socket.connect(host, port, timeout: timeout);
     _subscription = _socket
         ?.asyncExpand((bytes) => Stream.fromIterable(bytes))
-        .listen((_) {},
-            onError: (_) async => await disconnect(),
-            onDone: () async => await disconnect());
+        .listen(
+          (_) {},
+          onError: (_) async => await disconnect(),
+          onDone: () async => await disconnect(),
+        );
     _subscription?.pause();
   }
 
@@ -24,15 +26,20 @@ class FutureSoket {
   FutureSoket.fromSoket(this._socket) {
     _subscription = _socket
         ?.asyncExpand((bytes) => Stream.fromIterable(bytes))
-        .listen((_) {},
-            onError: (_) async => await disconnect(),
-            onDone: () async => await disconnect());
+        .listen(
+          (_) {},
+          onError: (_) async => await disconnect(),
+          onDone: () async => await disconnect(),
+        );
     _subscription?.pause();
   }
 
   bool isConnected() => _socket is Socket;
 
   Future<Uint8List> read(int len, [Duration? timeout]) async {
+    if (len <= 0) {
+      return Uint8List(0);
+    }
     final id = await _waitYourTurn();
     final result = Completer<Uint8List>();
     final bytes = Uint8List(len);
@@ -42,7 +49,8 @@ class FutureSoket {
       _execptionTimer = Timer(timeout, () {
         _subscription?.pause();
         result.completeError(
-            TimeoutException("read soket timeout: $timeout", timeout));
+          TimeoutException("read soket timeout: $timeout", timeout),
+        );
       });
     }
     _subscription?.onData((b) {

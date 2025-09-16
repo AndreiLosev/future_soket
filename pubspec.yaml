@@ -1,6 +1,6 @@
 name: future_soket
 description: wrapper for Socket, has methodh await read(count_byte).
-version: 1.0.4
+version: 1.0.5
 repository: https://github.com/AndreiLosev/future_soket
 
 environment:
